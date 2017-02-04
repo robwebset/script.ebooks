@@ -32,6 +32,7 @@ from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 
 ADDON = xbmcaddon.Addon(id='script.ebooks')
+FANART = ADDON.getAddonInfo('fanart')
 CWD = ADDON.getAddonInfo('path').decode("utf-8")
 RES_DIR = xbmc.translatePath(os.path.join(CWD, 'resources').encode("utf-8")).decode("utf-8")
 MEDIA_DIR = xbmc.translatePath(os.path.join(RES_DIR, 'media').encode("utf-8")).decode("utf-8")
@@ -119,7 +120,35 @@ class EBookBase():
             ebook.tidyUp()
             del ebook
 
+        # If there is still no cover image, check for folder.jpg in the same directory
+        if coverTargetName in [None, ""]:
+            baseDirectory = (os_path_split(filePath))[0]
+            subdirs, filesInDir = xbmcvfs.listdir(baseDirectory)
+            for fileInDir in filesInDir:
+                if fileInDir.lower() in ['folder.jpg', 'cover.jpg', 'folder.png', 'cover.png']:
+                    coverTargetName = os_path_join(baseDirectory, fileInDir)
+
         return coverTargetName
+
+    @staticmethod
+    def getFanArt(filePath):
+        # Check if there is a cached version
+        fullpathLocalImage, bookExt = os.path.splitext(filePath)
+        fullpathLocalImage = "%s-fanart.jpg" % fullpathLocalImage
+
+        if xbmcvfs.exists(fullpathLocalImage):
+            log("EBookBase: Found book fanart image %s" % fullpathLocalImage)
+            return fullpathLocalImage
+
+        # Now check if there is a default fanart file
+        fanartImage = FANART
+        baseDirectory = (os_path_split(filePath))[0]
+        subdirs, filesInDir = xbmcvfs.listdir(baseDirectory)
+        for fileInDir in filesInDir:
+            if fileInDir.lower() in ['fanart.jpg', 'fanart.png']:
+                fanartImage = os_path_join(baseDirectory, fileInDir)
+
+        return fanartImage
 
     def tidyUp(self):
         # If we had to copy the file locally, make sure we delete it
@@ -131,6 +160,9 @@ class EBookBase():
         return ""
 
     def getAuthor(self):
+        return ""
+
+    def getDescription(self):
         return ""
 
     # Checks the cache to see if there is a cover for this ebook
@@ -256,7 +288,7 @@ class MobiEBook(EBookBase):
     def _getFallbackReader(self):
         if self.bookFallback is None:
             try:
-                self.bookFallback = Mobi(self.filePath)
+                self.bookFallback = Mobi(str(self.filePath))
                 # Need to parse all the header data in the book
                 self.bookFallback.parse()
             except:
@@ -312,6 +344,21 @@ class MobiEBook(EBookBase):
         except:
             pass
         return author
+
+    def getDescription(self):
+        description = ""
+        if self.book is not None:
+            try:
+                description = self.book.description
+            except:
+                log("MobiEBook: Failed to get description for mobi %s with error: %s" % (self.filePath, traceback.format_exc()), xbmc.LOGERROR)
+
+        if description is None:
+            description = ""
+        else:
+            description = self.convertHtmlIntoKodiText(description)
+
+        return description
 
     def extractCoverImage(self):
         log("MobiEBook: Extracting cover for %s" % self.filePath)
@@ -641,6 +688,28 @@ class EPubEBook(EBookBase):
             pass
         return author
 
+    def getDescription(self):
+        description = ""
+
+        if self.book is not None:
+            try:
+                if self.book.description not in [None, ""]:
+                    if len(self.book.description) > 0:
+                        description = self.book.description
+                        try:
+                            # Sometimes descriptions can have HTML in them, remove it
+                            description = self.convertHtmlIntoKodiText(description)
+                        except:
+                            pass
+            except:
+                log("EPubEBook: Failed to get description for epub %s with error: %s" % (self.filePath, traceback.format_exc()), xbmc.LOGERROR)
+
+        try:
+            log("EPubEBook: Description is %s for book %s" % (description.decode('utf-8', 'ignore'), self.filePath))
+        except:
+            pass
+        return description
+
     # Gets the cover for a given eBook
     def extractCoverImage(self):
         if self.book is None:
@@ -650,10 +719,24 @@ class EPubEBook(EBookBase):
         try:
             # Get the cover for the book from the eBook file
             coverItem = self.bookFile.get_item('cover')
+            # Make sure the cover found is not the text linking to it
+            if coverItem is not None:
+                if '.htm' in coverItem.href:
+                    coverItem = None
 
             if coverItem is None:
                 # No cover found yet, try again
                 coverItem = self.bookFile.get_item('cover-image')
+                if coverItem is not None:
+                    if '.htm' in coverItem.href:
+                        coverItem = None
+
+            if coverItem is None:
+                # No cover found yet, try again
+                coverItem = self.bookFile.get_item('cover-jpg')
+                if coverItem is not None:
+                    if '.htm' in coverItem.href:
+                        coverItem = None
 
             if coverItem is not None:
                 # Check the name of the cover file, as we want to know the extension

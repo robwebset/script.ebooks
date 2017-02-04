@@ -12,6 +12,7 @@ from settings import log
 class Opds():
     def __init__(self):
         self.rootImage = None
+        self.rootTitle = None
         self.menuContents = {}
         self.isBookList = False
 
@@ -61,6 +62,11 @@ class Opds():
                     if iconElem.string not in [None, ""]:
                         self.rootImage = "%s%s" % (Settings.getOPDSLocation(), iconElem.string)
 
+                titleElem = soup.find('title')
+                if titleElem not in [None, ""]:
+                    if titleElem.string not in [None, ""]:
+                        self.rootTitle = titleElem.string
+
                 # Check each entry, these will be the different view sections
                 for elemItem in soup.findAll('entry'):
                     titleElem = elemItem.find('title')
@@ -87,6 +93,17 @@ class Opds():
 
         return rootIcon
 
+    def getRootTitle(self):
+        rootTitle = ""
+        # Load the title details if not already there
+        if self.rootTitle is None:
+            self._getRootContents()
+
+        if self.rootTitle not in [None, ""]:
+            rootTitle = self.rootTitle
+
+        return rootTitle
+
     def getRoootMenuContents(self):
         if len(self.menuContents) < 1:
             self._getRootContents()
@@ -108,9 +125,14 @@ class Opds():
                     if iconElem.string not in [None, ""]:
                         self.rootImage = "%s%s" % (Settings.getOPDSLocation(), iconElem.string)
 
+                titleElem = soup.find('title')
+                if titleElem not in [None, ""]:
+                    if titleElem.string not in [None, ""]:
+                        self.rootTitle = titleElem.string
+
                 # Check each entry, these will be the different view sections
                 for elemItem in soup.findAll('entry'):
-                    bookDetails = {'title': '', 'author': '', 'link': '', 'cover': ''}
+                    bookDetails = {'title': '', 'author': '', 'link': '', 'cover': '', 'description': ''}
 
                     # Get the title of the book
                     titleElem = elemItem.find('title')
@@ -120,7 +142,7 @@ class Opds():
                         bookDetails['title'] = bookDetails['title'].replace('&quote;', '"')
                         bookDetails['title'] = bookDetails['title'].replace('&nbsp;', ' ')
 
-                    # Get the authods of the book
+                    # Get the authors of the book
                     authorElem = elemItem.find('author')
                     if authorElem not in [None, ""]:
                         authors = []
@@ -130,6 +152,23 @@ class Opds():
                         bookDetails['author'] = bookDetails['author'].replace('&amp;', '&')
                         bookDetails['author'] = bookDetails['author'].replace('&quote;', '"')
                         bookDetails['author'] = bookDetails['author'].replace('&nbsp;', ' ')
+
+                    # Get the description of the book
+                    description = ""
+                    summaryElem = elemItem.find('summary')
+                    if summaryElem not in [None, ""]:
+                        description = summaryElem.text
+
+                    if description in [None, ""]:
+                        contentElem = elemItem.find('content')
+                        if contentElem not in [None, ""]:
+                            description = contentElem.text
+
+                    if description not in [None, ""]:
+                        bookDetails['description'] = description
+                        bookDetails['description'] = bookDetails['description'].replace('&amp;', '&')
+                        bookDetails['description'] = bookDetails['description'].replace('&quote;', '"')
+                        bookDetails['description'] = bookDetails['description'].replace('&nbsp;', ' ')
 
                     # Get all the links
                     for linkElem in elemItem.findAll('link'):

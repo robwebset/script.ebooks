@@ -67,10 +67,12 @@ class MenuNavigator():
 
         opds = Opds()
         iconImage = opds.getRootImage()
+        opdsTitle = opds.getRootTitle()
         del opds
         url = self._build_url({'mode': 'opds', 'href': ' '})
         li = xbmcgui.ListItem(ADDON.getLocalizedString(32023), iconImage=iconImage)
         li.setProperty("Fanart_Image", FANART)
+        li.setInfo('video', {'Plot': "[B]%s[/B]" % opdsTitle})
         li.addContextMenuItems([], replaceItems=True)
         xbmcplugin.addDirectoryItem(handle=self.addon_handle, url=url, listitem=li, isFolder=True)
 
@@ -81,12 +83,14 @@ class MenuNavigator():
         opds = Opds()
         iconImage = opds.getRootImage()
         menuContents = opds.getRoootMenuContents()
+        menuTitle = opds.getRootTitle()
         del opds
 
         for title in menuContents:
             url = self._build_url({'mode': 'opds2', 'href': menuContents[title]})
             li = xbmcgui.ListItem(title, iconImage=iconImage)
             li.setProperty("Fanart_Image", FANART)
+            li.setInfo('video', {'Plot': "[B]%s[/B]" % menuTitle})
             li.addContextMenuItems([], replaceItems=True)
             xbmcplugin.addDirectoryItem(handle=self.addon_handle, url=url, listitem=li, isFolder=True)
 
@@ -97,6 +101,7 @@ class MenuNavigator():
 
         opds = Opds()
         contentList = opds.getList(href)
+        contentTitle = opds.getRootTitle()
 
         if opds.isBookListContent():
             # Now display the book list
@@ -106,6 +111,7 @@ class MenuNavigator():
                 url = self._build_url({'mode': 'opds2', 'href': entry['link']})
                 li = xbmcgui.ListItem(entry['title'], iconImage=opds.getRootImage())
                 li.setProperty("Fanart_Image", FANART)
+                li.setInfo('video', {'Plot': "[B]%s[/B]" % contentTitle})
                 li.addContextMenuItems([], replaceItems=True)
                 xbmcplugin.addDirectoryItem(handle=self.addon_handle, url=url, listitem=li, isFolder=True)
 
@@ -160,9 +166,21 @@ class MenuNavigator():
             except:
                 pass
 
+            # Check if there is a folder image in the directory
+            folderImage = 'DefaultFolder.png'
+            fanartImage = FANART
+            subdirs, filesInDir = xbmcvfs.listdir(nextDir)
+            for fileInDir in filesInDir:
+                if fileInDir.lower() in ['folder.jpg', 'cover.jpg', 'folder.png', 'cover.png']:
+                    folderImage = os_path_join(nextDir, fileInDir)
+                elif fileInDir.lower() in ['fanart.jpg', 'fanart.png']:
+                    fanartImage = os_path_join(nextDir, fileInDir)
+
             url = self._build_url({'mode': 'directory', 'directory': nextDir})
-            li = xbmcgui.ListItem(displayName, iconImage='DefaultFolder.png')
-            li.setProperty("Fanart_Image", FANART)
+            li = xbmcgui.ListItem(displayName, iconImage=folderImage)
+            li.setProperty("Fanart_Image", fanartImage)
+            plotDisplay = "[B]%s[/B]" % adir
+            li.setInfo('video', {'Plot': plotDisplay})
             li.addContextMenuItems([], replaceItems=True)
             xbmcplugin.addDirectoryItem(handle=self.addon_handle, url=url, listitem=li, isFolder=True)
 
@@ -182,6 +200,7 @@ class MenuNavigator():
 
             title = ""
             author = ""
+            description = ""
             isRead = False
             if bookDetails in [None, ""]:
                 # Need the details of this book
@@ -189,16 +208,17 @@ class MenuNavigator():
                 eBook = EBookBase.createEBookObject(fullpath)
                 title = eBook.getTitle()
                 author = eBook.getAuthor()
+                description = eBook.getDescription()
                 eBook.tidyUp()
                 del eBook
 
                 # Add this book to the list
-                bookDB.addBook(fullpath, title, author)
+                bookDB.addBook(fullpath, title, author, description)
             else:
                 isRead = bookDetails['complete']
                 title = bookDetails['title']
                 author = bookDetails['author']
-
+                description = bookDetails['description']
             del bookDB
 
             displayString = eBookFile
@@ -238,7 +258,9 @@ class MenuNavigator():
 
             url = self._build_url({'mode': 'chapters', 'filename': fullpath, 'cover': coverTargetName})
             li = xbmcgui.ListItem(displayString, iconImage=coverTargetName)
-            li.setProperty("Fanart_Image", FANART)
+            li.setProperty("Fanart_Image", EBookBase.getFanArt(fullpath))
+            if description not in [None, ""]:
+                li.setInfo('video', {'Plot': description})
             li.addContextMenuItems(self._getContextMenu(fullpath), replaceItems=True)
             xbmcplugin.addDirectoryItem(handle=self.addon_handle, url=url, listitem=li, isFolder=True)
 
@@ -257,7 +279,7 @@ class MenuNavigator():
             isRead = False
             if dbBookDetails in [None, ""]:
                 # Add this book to the list
-                bookDB.addBook(bookDetails['link'], bookDetails['title'], bookDetails['author'])
+                bookDB.addBook(bookDetails['link'], bookDetails['title'], bookDetails['author'], bookDetails['description'])
             else:
                 isRead = dbBookDetails['complete']
 
@@ -278,6 +300,8 @@ class MenuNavigator():
             url = self._build_url({'mode': 'chapters', 'filename': bookDetails['link'], 'cover': coverTargetName})
             li = xbmcgui.ListItem(displayString, iconImage=coverTargetName)
             li.setProperty("Fanart_Image", FANART)
+            if bookDetails['description'] not in [None, ""]:
+                li.setInfo('video', {'Plot': bookDetails['description']})
             li.addContextMenuItems(self._getContextMenu(bookDetails['link']), replaceItems=True)
             xbmcplugin.addDirectoryItem(handle=self.addon_handle, url=url, listitem=li, isFolder=True)
 
@@ -293,13 +317,20 @@ class MenuNavigator():
         bookDetails = bookDB.getBookDetails(fullpath)
         del bookDB
 
+        bookAuthorAndTitle = ""
         if bookDetails is not None:
             readChapter = bookDetails['readchapter']
             readAll = bookDetails['complete']
+            # Create the author/title combination
+            bookAuthorAndTitle = "[B]%s[/B]\n[I]%s[/I]" % (bookDetails['title'], bookDetails['author'])
 
         eBook = EBookBase.createEBookObject(fullpath)
         # Get the chapters for this book
         chapters = self._getChapters(fullpath, eBook)
+
+        if bookAuthorAndTitle in [None, ""]:
+            bookAuthorAndTitle = "[B]%s[/B]\n[I]%s[/I]" % (eBook.getTitle(), eBook.getAuthor())
+
         eBook.tidyUp()
         del eBook
 
@@ -330,7 +361,9 @@ class MenuNavigator():
                 foundMatchedReadChapter = True
 
             li = xbmcgui.ListItem(displaytitle, iconImage=defaultImage)
-            li.setProperty("Fanart_Image", FANART)
+            li.setProperty("Fanart_Image", EBookBase.getFanArt(fullpath))
+            # Set the Author and book title as the Plot, that will be shown on some skins
+            li.setInfo('video', {'Plot': bookAuthorAndTitle})
             li.addContextMenuItems(self._getContextMenu(fullpath, chapter['link'], chapter['previousLink'], chapter['lastChapter']), replaceItems=True)
             xbmcplugin.addDirectoryItem(handle=self.addon_handle, url=url, listitem=li, isFolder=False)
 
@@ -487,6 +520,7 @@ if __name__ == '__main__':
 
     # Record what the plugin deals with, files in our case
     xbmcplugin.setContent(addon_handle, 'files')
+#    xbmcplugin.setContent(addon_handle, 'movies')
 
     # Get the current mode from the arguments, if none set, then use None
     mode = args.get('mode', None)
@@ -497,26 +531,17 @@ if __name__ == '__main__':
     if mode is None:
         log("EBooksPlugin: Mode is NONE - showing root menu")
 
-        json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Addons.GetAddonDetails", "params": { "addonid": "repository.robwebset", "properties": ["enabled", "broken", "name", "author"]  }, "id": 1}')
+        json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Addons.GetAddonDetails", "params": { "addonid": "repository.urepo", "properties": ["enabled", "broken", "name", "author"]  }, "id": 1}')
         json_response = json.loads(json_query)
 
         displayNotice = True
         if ("result" in json_response) and ('addon' in json_response['result']):
             addonItem = json_response['result']['addon']
-            if (addonItem['enabled'] is True) and (addonItem['broken'] is False) and (addonItem['type'] == 'xbmc.addon.repository') and (addonItem['addonid'] == 'repository.robwebset') and (addonItem['author'] == 'robwebset'):
+            if (addonItem['enabled'] is True) and (addonItem['broken'] is False) and (addonItem['type'] == 'xbmc.addon.repository') and (addonItem['addonid'] == 'repository.urepo'):
                 displayNotice = False
 
         if displayNotice:
-            json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Addons.GetAddonDetails", "params": { "addonid": "repository.urepo", "properties": ["enabled", "broken", "name", "author"]  }, "id": 1}')
-            json_response = json.loads(json_query)
-
-            if ("result" in json_response) and ('addon' in json_response['result']):
-                addonItem = json_response['result']['addon']
-                if (addonItem['enabled'] is True) and (addonItem['broken'] is False) and (addonItem['type'] == 'xbmc.addon.repository') and (addonItem['addonid'] == 'repository.urepo'):
-                    displayNotice = False
-
-        if displayNotice:
-            xbmc.executebuiltin('Notification("robwebset or URepo Repository Required","github.com/robwebset/repository.robwebset",10000,%s)' % ADDON.getAddonInfo('icon'))
+            xbmc.executebuiltin('Notification("URepo Repository Required","www.urepo.org",10000,%s)' % ADDON.getAddonInfo('icon'))
         else:
             menuNav = MenuNavigator(base_url, addon_handle)
             menuNav.rootMenu()
