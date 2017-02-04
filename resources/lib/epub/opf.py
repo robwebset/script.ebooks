@@ -206,6 +206,11 @@ def _parse_xml_metadata(element):
     for node in element.getElementsByTagName('dc:description'):
         metadata.description = get_node_text(node)
 
+    # Custom change to support description in some books not starting with dc:
+    if metadata.description in [None, ""]:
+        for node in element.getElementsByTagName('description'):
+            metadata.description = get_node_text(node)
+
     for node in element.getElementsByTagName('dc:publisher'):
         metadata.publisher = get_node_text(node)
 

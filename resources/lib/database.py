@@ -38,7 +38,7 @@ class EbooksDB():
             c.execute('''CREATE TABLE version (version text primary key)''')
 
             # Insert a row for the version
-            versionNum = "1"
+            versionNum = "2"
 
             # Run the statement passing in an array with one value
             c.execute("INSERT INTO version VALUES (?)", (versionNum,))
@@ -47,7 +47,7 @@ class EbooksDB():
             # The "id" will be auto-generated as the primary key
             # Note: Index will automatically be created for "unique" values, so no
             # need to manually create them
-            c.execute('''CREATE TABLE books (id integer primary key, fullpath text unique, title text, author text, readchapter text, complete integer)''')
+            c.execute('''CREATE TABLE books (id integer primary key, fullpath text unique, title text, author text, readchapter text, complete integer, description text)''')
 
             # Save (commit) the changes
             conn.commit()
@@ -55,6 +55,36 @@ class EbooksDB():
             # We can also close the connection if we are done with it.
             # Just be sure any changes have been committed or they will be lost.
             conn.close()
+
+    # Creates a DB if it does not exist, or updates it if it does already exist
+    def createOrUpdateDB(self):
+        if not xbmcvfs.exists(self.databasefile):
+            # No database created yet - nothing to do
+            self._createDatabase()
+            return
+
+        # The database was already created, check to see if they need to be updated
+        # Check if this is an upgrade
+        conn = sqlite3.connect(self.databasefile)
+        conn.text_factory = str
+        c = conn.cursor()
+        c.execute('SELECT * FROM version')
+        currentVersion = int(c.fetchone()[0])
+        log("EbooksDB: Current version number in DB is: %d" % currentVersion)
+
+        # If the database is at version one, add the version 2 tables
+        if currentVersion < 2:
+            log("EbooksDB: Updating to version 2")
+            # Add the column that was added in version 2
+            c.execute('''ALTER TABLE books ADD description text''')
+            # Update the new version of the database
+            currentVersion = 2
+            c.execute('DELETE FROM version')
+            c.execute("INSERT INTO version VALUES (?)", (currentVersion,))
+            # Save (commit) the changes
+            conn.commit()
+
+        conn.close()
 
     # Get a connection to the current database
     def getConnection(self):
@@ -86,23 +116,24 @@ class EbooksDB():
         # row[3] - Author
         # row[4] - Current chapter read until
         # row[5] - 1 if complete, otherwise 0
+        # row[6] - Description
         completeStatus = False
         if row[5] == 1:
             completeStatus = True
-        returnData = {'fullpath': row[1], 'title': row[2], 'author': row[3], 'readchapter': row[4], 'complete': completeStatus}
+        returnData = {'fullpath': row[1], 'title': row[2], 'author': row[3], 'readchapter': row[4], 'complete': completeStatus, 'description': row[6]}
 
         conn.close()
         return returnData
 
-    def addBook(self, fullPath, title, author):
+    def addBook(self, fullPath, title, author, description=""):
         log("EbooksDB: Adding %s" % fullPath)
 
         # Get a connection to the DB
         conn = self.getConnection()
         c = conn.cursor()
 
-        insertData = (fullPath, title, author)
-        cmd = 'INSERT OR REPLACE INTO books (fullpath, title, author, readchapter, complete) VALUES (?,?,?,"",0)'
+        insertData = (fullPath, title, author, description)
+        cmd = 'INSERT OR REPLACE INTO books (fullpath, title, author, readchapter, complete, description) VALUES (?,?,?,"",0,?)'
         c.execute(cmd, insertData)
 
         rowId = c.lastrowid
@@ -173,11 +204,12 @@ class EbooksDB():
             # row[3] - Author
             # row[4] - Current chapter read until
             # row[5] - 1 if complete, otherwise 0
+            # row[6] - Description
             for row in rows:
                 completeStatus = False
                 if row[5] == 1:
                     completeStatus = True
-                details = {'fullpath': row[1], 'title': row[2], 'author': row[3], 'readchapter': row[4], 'complete': completeStatus}
+                details = {'fullpath': row[1], 'title': row[2], 'author': row[3], 'readchapter': row[4], 'complete': completeStatus, 'description': row[6]}
                 results.append(details)
 
         conn.close()

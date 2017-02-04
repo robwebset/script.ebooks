@@ -103,6 +103,8 @@ class Book:
         self.title = fn
         self.author = "??"
         self.language = "??"
+        # Rob Addition: Description
+        self.description = ""
         self.is_a_book = False
 
         f = open(fn)
@@ -185,6 +187,9 @@ class Book:
                     (type(self.exth['updated title']) is str)):
                     self.title = ' '.join(self.exth['updated title'])
 
+                if 'description' in self.exth:
+                    self.description = ' <P> '.join(self.exth['description'])
+
         elif self.type == 'TEXtREAd':
             LOG(2, "This is an older MOBI book")
             self.rawdata = d
@@ -207,6 +212,10 @@ class Book:
             except:
                 self.title, self.author, self.language = ("Unknown", "Unknown",
                         "en-us")
+            try:
+                self.description = soup.fetch("dc:description")[0].getText()
+            except:
+                pass
 
     def to_html(self):
         last_idx = (
