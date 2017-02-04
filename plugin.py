@@ -520,7 +520,6 @@ if __name__ == '__main__':
 
     # Record what the plugin deals with, files in our case
     xbmcplugin.setContent(addon_handle, 'files')
-#    xbmcplugin.setContent(addon_handle, 'movies')
 
     # Get the current mode from the arguments, if none set, then use None
     mode = args.get('mode', None)
