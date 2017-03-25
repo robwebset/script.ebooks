@@ -256,6 +256,12 @@ class MenuNavigator():
             except:
                 pass
 
+            if coverTargetName not in [None, ""]:
+                try:
+                    coverTargetName = coverTargetName.encode("utf-8")
+                except:
+                    pass
+
             url = self._build_url({'mode': 'chapters', 'filename': fullpath, 'cover': coverTargetName})
             li = xbmcgui.ListItem(displayString, iconImage=coverTargetName)
             li.setProperty("Fanart_Image", EBookBase.getFanArt(fullpath))
