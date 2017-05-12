@@ -179,7 +179,9 @@ class Settings():
 
     @staticmethod
     def _getOPDSPreferredBookOrder(bookUrl):
-        orderId = 0
+        # Set the preference for unknown book types high so they are low
+        # preference
+        orderId = 100
         if '/epub/' in bookUrl:
             orderId = int(ADDON.getSetting("epubPreferenceOrder"))
         elif '/mobi/' in bookUrl:
