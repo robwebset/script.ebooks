@@ -1,3 +1,6 @@
+v100.5.2 (2017-05-12)
+- Set OPDS book of an unknown format to the lowest priority
+
 v100.5.1 (2017-03-25)
 - Character encoding fix
 
