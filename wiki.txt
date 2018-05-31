@@ -1,0 +1,94 @@
+[[https://github.com/robwebset/script.ebooks/raw/master/icon.png]]
+
+== Introduction ==
+You can install this addon from: [https://www.urepo.org URepo Repository]
+<br />
+eBooks is an addon that allows you to list and view your epub and mobi eBooks using Kodi. Only the text will be displayed, no images.
+<br />
+Supported book formats are
+* ePub
+* Mobi
+* PDF
+<br />
+On installation of the eBook addon it will need configuring to point to the directory that contains all of your eBook files. This can be done via the eBooks Settings, or if not set, you will be prompted on first use.
+<br />
+== Book Listing ==
+When entering the addon via the Programs Menu the available books will be listed in the format:
+<br />
+:''Author - Title''
+<br />
+Any directories that exist will be displayed with their directory name and enclosed in square brackets. On selecting a book, the chapters in that book will be displayed (Note: If there are no chapters, then a single entry for the entire book will be displayed).
+<br />
+Any books or chapters that have been marked previously as read will start with an asterisk ("*").
+<br />
+== Text Viewer ==
+When a chapter is selected for reading it will be displayed in the text viewer. This enables the reader to scroll down the text either using the scrollbar or up and down arrow keys. Once the chapter has been read the user can either
+* Select "Close" to close the window
+* Select "Mark As Read" to record that this chapter has been read and then close the window
+* Select "&lt;" (Or the Page Up key) to go back to the previous chapter
+* Select ">" (Or the Page Down key) to go to the next chapter
+<br />
+== Cover Art ==
+The cover art for a given book is retrieved in the following order:
+# A jpg file in the same directory as the book with the same name (i.e. a book with the name mybook.epub and an image with the name mybook.jpg)
+# An image that has previously been cached from a book (Based on the file name of the book)
+# Extracted internal image from the book file
+# The default cover image set in the eBooks settings screen.
+<br />
+== OPDS Support ==
+The eBooks addon supports the OPDS network protocol that enables you to expost your eBooks over the network from a server. For information on how to set this up on your Calibre installation, a [http://manual.calibre-ebook.com/gui.html#connect-share brief description can be found here].
+<br />
+This is the fastest way to navigate your library, especially if you wish to do so over a network connection. It also allows different filtering methods rather than a directory based navigation.
+<br />
+== Network Support == 
+
+If you store your books on a network server and use Kodi to access them via smb:// or nfs:// then the initial listing of the available books will be slower (Until they are cached into the eBooks database) and chapter listings and viewing will always be slower.
+<br />
+'''Why?''' - Because the ebook reading scripts are not able to read the smb:// or nfs:// format that Kodi uses, so in order for the addon to read the file, it is copied to a temporary local directory, it is this copy that makes the processing of data slower.
+<br />
+'''How to Avoid This?''' - Either store the books locally or use the OS level network functionality to map the drive in such a way that it looks like a local drive. The use of the OPDS interface will also supply a faster and cleaner navigation experience (Although the book will still need to be copied locally when it comes time to read it)
+<br />
+== Settings ==
+=== General ===
+{| border="0"
+|- valign=top
+|
+:'''Use eBooks Folder'''
+::If eBooks are to be read from a directory location
+:'''- eBooks Folder'''
+::The Location where the eBooks are stored
+:'''OPDS Interface'''
+::If eBooks are to be read from an OPDS server
+:'''- OPDS URL'''
+::The URL and port of the OPDS server (e.g. localhost:8080)
+:'''Default Book Cover Image'''
+::The default cover image to use if there is no image available for the book
+:'''Only Show Whole Book If No Chapters'''
+::Will only show a link to the entire book if there are no chapters available in the book
+:'''Mark Chapter As Read When Navigating To Next Chapter'''
+::When using the next button on the viewer, mark the chapter being left as read
+:'''Use White Background For Reader'''
+::Use black text on a white background for the viewer window
+:'''Always Use Page Numbers For PDF Files'''
+::When listing PDF files, use page numbers rather than any chapters found
+|}
+=== Operations ===
+{| border="0"
+|- valign=top
+|
+:'''Clean Book Cover Cache'''
+::Removes any book covers that have been cached
+:'''Clear Book Details Cache'''
+::Clears any data cached about the ebooks (inc. read markers)
+:<u>'''''Debugging'''''</u>
+::
+:'''Enable debug logging'''
+::Enables eBooks debug logging (Required if reporting a problem) - for this to work, system-wide Kodi logging must also be enabled
+|}
+<br />
+== Debugging ==
+If reporting a problem, please also provide a debug log. To do this you need to enable BOTH:
+* Kodi logging from the main setting menu
+* eBooks debug from the eBooks addon settings menu
+Please do not paste the log into the forum thread, just link to it.
+<br />
