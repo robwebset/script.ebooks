@@ -1,3 +1,8 @@
+__NOTICE__
+
+__This addon is no longer maintained by me, if you are interested in taking it over then please contact me via the Issues section. (You are welcome to submit it to the official Kodi Repo - just make sure you remove my name from it before you do it)__
+
+
 ![EBooks](icon.png)
 
 eBooks is an addon that allows you to list and view your epub, mobi and pdf eBooks using Kodi.
@@ -5,15 +10,3 @@ eBooks is an addon that allows you to list and view your epub, mobi and pdf eBoo
 After installation go to settings and point it to the directory containing your eBooks. Then you can navigate to the eBooks addon in the "Programs" section to view your eBooks. For more information on it's features please see the wiki:
 
 [Add-on:EBooks](https://github.com/robwebset/script.ebooks/wiki)
-
-You can install this addon from: [Repository:URepo](http://www.urepo.org/)
-
-For latest developer version: [Repository:robwebset](https://github.com/robwebset/repository.robwebset/blob/master/repos/repository.robwebset/repository.robwebset-1.0.0.zip) ([wiki](https://github.com/robwebset/repository.robwebset/wiki))
-
-To ask questions or comment about eBooks, please use the forum at [URepo.org](http://www.urepo.org/forum/viewtopic.php?t=1764)
-
-__Donations__
-
-If you have found eBooks useful and would like to help support future development and bug fixes, then please feel free to make a small donation.
-
-[![Donation](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SP2JPL4A6U3CW)

@@ -1,8 +1,6 @@
 [[https://github.com/robwebset/script.ebooks/raw/master/icon.png]]
 
 == Introduction ==
-You can install this addon from: [https://www.urepo.org URepo Repository]
-<br />
 eBooks is an addon that allows you to list and view your epub and mobi eBooks using Kodi. Only the text will be displayed, no images.
 <br />
 Supported book formats are
